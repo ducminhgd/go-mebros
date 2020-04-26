@@ -6,17 +6,24 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 )
 
 // webhookLink handle request and response to client for webhook path
 func webhookLink(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello Webhook")
+	token := chi.URLParam(r, "token")
+	w.Write([]byte(fmt.Sprintf("title: %s", token)))
 }
 
 // RunServer runs RESTFul API service of mebros
 func RunServer() {
-	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/webhook", webhookLink)
+	router := chi.NewRouter()
+
+	// Uses middleware
+	router.Use(middleware.Logger)
+	router.Use(middleware.RequestID)
+
+	router.Get("/webhook/{token}", webhookLink)
 	log.Fatal(http.ListenAndServe("0.0.0.0:8000", router))
 }
